@@ -1,6 +1,25 @@
 import { Box, Text, TextField, Image, Button } from '@skynexui/components';
+import { createClient } from '@supabase/supabase-js';
 import React from 'react';
 import appConfig from '../config.json';
+
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYW5vbiIsImlhdCI6MTY0MzQwMTQ2OSwiZXhwIjoxOTU4OTc3NDY5fQ.URevA0gNzEXV-FA2M8kl78ThsukrbhY84Gs2ptn-rhQ';
+const SUPABASE_URL = 'https://gxuzoktpyviceeqpneom.supabase.co';
+const supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// fetch(`${SUPABASE_URL}/rest/v1/mensagens?select=*`, {
+//      headers: {
+//          'Content-Type': 'application/json',
+//          'apikey': SUPABASE_ANON_KEY,
+//          'Authorization': 'Bearer' + SUPABASE_ANON_KEY,
+//      }
+//})
+//  .then((res) => {
+//      return res.json();  
+//  })
+//  .then((response) => {
+//      console.log(response);  
+//  })
 
 export default function ChatPage() {
     const [mensagem, setMensagem] = React.useState('');
@@ -18,17 +37,37 @@ export default function ChatPage() {
     - [x] Lista de mensagem
     */
 
+    React.useEffect(() => {
+        supabaseClient
+            .from('mensagens')
+            .select('*')
+            .order('id', {ascending: false})
+            .then(({ data }) => {
+                console.log('Dados da consulta: ',data);
+                setListaDeMensagens(data);
+            });
+    }, []);
+    
+
     function handleNovaMensagem(novaMensagem) {
         const mensagem = {
-            id: listaDeMensagens.length + 1,
+            //id: listaDeMensagens.length + 1,
             de: 'leo95h',
             texto: novaMensagem,
         };
 
-        setListaDeMensagens([
-            mensagem,
-            ...listaDeMensagens,
-        ]);
+        supabaseClient
+            .from('mensagens')
+            .insert([
+                mensagem
+            ])
+            .then(({ data }) => {
+                console.log('Criando mensagem: ', data);
+                setListaDeMensagens([
+                    data[0],
+                    ...listaDeMensagens,
+                ]);
+            });
         setMensagem('');
     }
 
@@ -176,7 +215,7 @@ function MessageList(props) {
                                     display: 'inline-block',
                                     marginRight: '8px',
                                 }}
-                                src={`https://github.com/leo95h.png`}
+                                src={`https://github.com/${mensagem.de}.png`}
                             />
                             <Text tag="strong">
                                 {mensagem.de}
